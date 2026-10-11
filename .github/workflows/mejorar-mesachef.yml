@@ -1,0 +1,96 @@
+name: Mejorar MesaChef y ampliar sus catálogos
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/mejorar-mesachef.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: '47 */6 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: mesachef-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pages: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - run: git pull --ff-only origin main
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Instalar la mejora una vez y conservar futuras ediciones
+        env:
+          RELEASE_URL: 'https://mesachef-angel-studio.feythyme32.chatgpt.site/github-pages/MesaChef-3.2-23e084f01fc7.zip'
+          RELEASE_SHA256: '23e084f01fc7f58a3129fa0bb0f6cbefc3205fff0c8fa83a5a79e2948c9ab069'
+        run: |
+          if [ ! -f scripts/release-3.2-installed ]; then
+            curl --fail --location --retry 3 "$RELEASE_URL" --output /tmp/mesachef.zip
+            echo "$RELEASE_SHA256  /tmp/mesachef.zip" | sha256sum --check
+            python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          target = Path.cwd().resolve()
+          with ZipFile('/tmp/mesachef.zip') as archive:
+              for item in archive.infolist():
+                  assert (target / item.filename).resolve().is_relative_to(target), 'Ruta no válida'
+                  if not item.filename.startswith('.github/'):
+                      archive.extract(item, target)
+          PY
+            touch scripts/release-3.2-installed
+          fi
+      - name: Comprobar funciones, copias y fuentes
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
+          python -m unittest discover -s tests -p '*_test.py'
+          python scripts/validate-site.py
+      - name: Ampliar y actualizar fichas públicas de ALDI
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: python scripts/refresh-aldi.py --resume --max-products 120
+      - name: Ampliar y actualizar páginas públicas de El Corte Inglés
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: python scripts/refresh-eci.py --resume --max-pages 80
+      - name: Ampliar categorías públicas de Alcampo
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: python scripts/refresh-alcampo.py --resume --max-categories 20
+      - run: python scripts/validate-site.py
+      - name: Guardar app y consultas con sus fechas
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site scripts tests package.json README.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Mejorar accesibilidad y ampliar catálogos con fuente'
+            git push origin HEAD:main
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
