@@ -1,5 +1,5 @@
 (function(root){'use strict';
-const origins={mercadona:'https://tienda.mercadona.es',dia:'https://www.dia.es',carrefour:'https://www.carrefour.es',mas:'https://www.supermercadosmas.com'};
+const origins={mercadona:'https://tienda.mercadona.es',dia:'https://www.dia.es',carrefour:'https://www.carrefour.es',mas:'https://www.supermercadosmas.com',alcampo:'https://www.compraonline.alcampo.es',aldi:'https://www.aldi.es',elcorteingles:'https://www.elcorteingles.es'};
 const C={origins};
 C.text=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 C.unit=x=>({kilo:'kg',kilogramo:'kg',kg:'kg',l:'L',litro:'L',litros:'L',ud:'ud',unidad:'ud',unidades:'ud'}[C.text(x)]||String(x||''));
@@ -10,7 +10,7 @@ C.product=p=>{
  const date=Date.parse(p.fetchedAt);if(!Number.isFinite(date)||date>Date.now()+300000)throw Error('Fecha de fuente no válida');
  if(typeof p.zoneConfirmed!=='boolean'||typeof p.variable!=='boolean'||!(p.available===null||typeof p.available==='boolean'))throw Error('Estado de producto no válido');
  if(p.zoneConfirmed&&(!/^\d{5}$/.test(p.postcode)||typeof p.warehouse!=='string'||!p.warehouse))throw Error('Zona sin confirmar');
- const imageOrigins=['https://prod-mercadona.imgix.net','https://www.dia.es','https://static.carrefour.es','https://assets.supermercadosmas.com','https://www.supermercadosmas.com'];let image='';
+ const imageOrigins=['https://prod-mercadona.imgix.net','https://www.dia.es','https://static.carrefour.es','https://assets.supermercadosmas.com','https://www.supermercadosmas.com','https://www.compraonline.alcampo.es','https://s7g10.scene7.com','https://sgfm.elcorteingles.es','https://cdn.grupoelcorteingles.es'];let image='';
  try{const u=new URL(p.image);if(imageOrigins.includes(u.origin)&&!u.username&&!u.password)image=u.href;}catch{}
  return {id:p.id,retailer:p.retailer,sourceId:p.sourceId,name:p.name,url:C.safeURL(p.retailer,p.url),priceCents:p.priceCents,referenceCents:p.referenceCents,referenceUnit:C.unit(p.referenceUnit),format:String(p.format||'').slice(0,180),categories:Array.isArray(p.categories)?p.categories.filter(x=>typeof x==='string').map(x=>x.slice(0,150)):[],brand:String(p.brand||'').slice(0,150),image,fetchedAt:p.fetchedAt,postcode:p.postcode||null,warehouse:p.warehouse||null,zoneConfirmed:p.zoneConfirmed,variable:p.variable,available:p.available,conditionalPrice:p.conditionalPrice===true,needsRefresh:p.needsRefresh===true};
 };

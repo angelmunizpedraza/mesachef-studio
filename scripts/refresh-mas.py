@@ -35,13 +35,16 @@ def collect(resume=False,maximum=None,captured=None):
    return url,products,None
   except Exception as e:return url,[],str(e)[:250]
  with concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:
+  failures=0
   for url,products,error in pool.map(one,pending):
    for p in products:
     old=rows.get(p['id']);p['categories']=list(dict.fromkeys((old['categories']if old else [])+p['categories']));rows[p['id']]=p
-   if error:errors[url]=error
-   else:errors.pop(url,None);checked.append(url)
+   if error:errors[url]=error;failures+=1
+   else:errors.pop(url,None);checked.append(url);failures=0
    if rows:c.TARGET.mkdir(exist_ok=True,parents=True);c.atomic(target,snapshot())
    print(f'MAS: {len(checked)}/{len(urls)} primeras páginas, {len(rows)} fichas',flush=True)
+   if failures>=3 and error and ('403'in error or '401'in error or 'timed out'in error):
+    pool.shutdown(wait=False,cancel_futures=True);break
  if not rows:raise ValueError('Sin fichas verificables')
  return snapshot()
 if __name__=='__main__':

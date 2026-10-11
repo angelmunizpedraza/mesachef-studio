@@ -4,7 +4,7 @@
  E.localDate=(date=new Date())=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
  E.dateAt=(iso,offset)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+offset);return d;};
  E.recipe=id=>recipes().find(r=>r.id===id);
- E.defaults=()=>({version:3,customRecipes:[],history:[],batchChecks:{},market:root.MesaMarket.snapshot(),receipts:{},prefs:{name:'',people:2,budget:75,days:7,meals:['lunch','dinner'],diet:'all',allergens:[],maxTime:30,protein:false,start:E.localDate(),theme:'light'},plan:{},pantry:{},prices:{},packs:{},favorites:[],checks:{},extras:[],cooked:[],generation:0});
+ E.defaults=()=>({version:3,comfort:{easy:false,textSize:'normal',contrast:false,motion:'system'},customRecipes:[],history:[],batchChecks:{},market:root.MesaMarket.snapshot(),receipts:{},prefs:{name:'',people:2,budget:75,days:7,meals:['lunch','dinner'],diet:'all',allergens:[],maxTime:30,protein:false,start:E.localDate(),theme:'light'},plan:{},pantry:{},prices:{},packs:{},favorites:[],checks:{},extras:[],cooked:[],generation:0});
  E.product=(s,id)=>{const receipt=s.receipts[id];if(receipt)return {...receipt,status:'manual',source:'manual',variable:false};const pid=s.market.selection[id],p=s.market.products[pid];if(!p)return null;return {...p,status:p.postcode!==s.market.postcode||p.warehouse!==s.market.warehouse?'area':!p.available?'unavailable':s.market.errors[pid]?'failed':!root.MesaMarket.fresh(p)?'stale':'current'};};
  E.priced=p=>p&&['current','manual'].includes(p.status);
  E.pack=(s,id)=>{const p=E.product(s,id);return E.priced(p)?(p.source==='manual'?p.usableG:root.MesaMarket.usableG(p,id)):null;};
@@ -100,6 +100,7 @@
   const before=recipes().slice(seedRecipes.length);E.setCustom(customs);
   try{const s=legacyValidate({...raw,version:raw.version===1?1:2});s.version=3;s.customRecipes=customs;s.history=[];s.batchChecks={};
    if(raw.version===3){if(!Array.isArray(raw.history))throw Error('Historial no válido');s.history=raw.history.map(h=>{if(!h||typeof h.id!=='string'||!/^h[a-zA-Z0-9-]+$/.test(h.id)||typeof h.title!=='string'||h.title.length>200||!Number.isFinite(Date.parse(h.createdAt)))throw Error('Menú guardado no válido');const historical={...s,prefs:h.prefs,plan:h.plan,checks:{},cooked:[],history:[],customRecipes:h.customRecipes||customs};const past=E.validate(historical);return{id:h.id,title:h.title,createdAt:h.createdAt,prefs:past.prefs,plan:past.plan,customRecipes:past.customRecipes};});if(new Set(s.history.map(h=>h.id)).size!==s.history.length)throw Error('Menús repetidos');if(raw.batchChecks&&typeof raw.batchChecks==='object')for(const [key,value]of Object.entries(raw.batchChecks))if(typeof value==='boolean'&&/^\d+-(breakfast|lunch|dinner)-\d+$/.test(key))s.batchChecks[key]=value;}
+   if(raw.comfort!==undefined){const c=raw.comfort;if(!c||typeof c.easy!=='boolean'||typeof c.contrast!=='boolean'||!['normal','large','largest'].includes(c.textSize)||!['system','reduce'].includes(c.motion))throw Error('Apariencia no válida');s.comfort={easy:c.easy,contrast:c.contrast,textSize:c.textSize,motion:c.motion};}
    return s;
   }finally{E.setCustom(before);}
  };

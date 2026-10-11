@@ -6,8 +6,20 @@ test('catálogo funciona en subruta, busca, guarda compra y excluye zonas descon
  w.eval(readFileSync('site/mesachef/catalog-core.js','utf8'));w.eval(readFileSync('site/mesachef/catalog.js','utf8'));w.MesaCatalog.mount(w.document.querySelector('#catalog'),'41011');
  for(let i=0;i<60&&!w.document.querySelector('.catalog-product');i++)await new Promise(resolve=>setTimeout(resolve,10));
  assert(w.document.querySelector('.catalog-product'));assert(calls.every(u=>u.startsWith('https://mesa.test/mi-repo/catalogs/')));
- const target=w.document.querySelector('.catalog-product-open').dataset.id;const product=w.MesaCatalog.products.find(p=>p.id===target);const input=w.document.querySelector('#catalog-search');input.value=product.name;input.dispatchEvent(new w.Event('input',{bubbles:true}));assert([...w.document.querySelectorAll('.catalog-product-open')].some(p=>p.dataset.id===target));
+ const target=w.document.querySelector('.catalog-product-open').dataset.id;const product=w.MesaCatalog.products.find(p=>p.id===target);const input=w.document.querySelector('#catalog-search');input.focus();input.value=product.name;input.dispatchEvent(new w.Event('input',{bubbles:true}));assert([...w.document.querySelectorAll('.catalog-product-open')].some(p=>p.dataset.id===target));
  w.document.querySelector('[data-cat="add"]').click();w.document.querySelector('[data-view="basket"]').click();assert(w.document.querySelector('.catalog-basket-row'));
- w.document.querySelector('[data-view="coverage"]').click();assert.equal(w.document.querySelectorAll('.catalog-store').length,10);assert(w.document.querySelector('.catalog-warning').textContent.length>10);
+ w.document.querySelector('[data-view="coverage"]').click();assert.equal(w.document.querySelectorAll('.catalog-store').length,JSON.parse(readFileSync('site/catalogs/retailers.json','utf8')).retailers.length);assert(w.document.querySelector('.catalog-warning').textContent.length>10);
  assert.deepEqual(warnings,[]);dom.window.close();
+});
+
+test('una copia local conserva productos y fechas cuando falla la red sin confirmar sus importes',async()=>{
+ const namespace='https://mesa.test/cache-repo/';const first=new JSDOM('<div id="catalog"></div>',{url:namespace,runScripts:'outside-only'});const w=first.window;w.indexedDB=indexedDB;w.MesaBase=namespace;
+ w.fetch=async url=>({ok:true,json:async()=>JSON.parse(readFileSync(new URL(url).pathname.replace('/cache-repo/','site/'),'utf8'))});
+ for(const name of ['catalog-core','catalog'])w.eval(readFileSync('site/mesachef/'+name+'.js','utf8'));w.MesaCatalog.mount(w.document.querySelector('#catalog'),'41011');
+ for(let i=0;i<100&&!w.MesaCatalog.products.length;i++)await new Promise(r=>setTimeout(r,10));await new Promise(r=>setTimeout(r,100));
+ const product=w.MesaCatalog.products[0],date=product.fetchedAt;assert(product);first.window.close();
+ const second=new JSDOM('<div id="catalog"></div>',{url:namespace,runScripts:'outside-only'}),v=second.window;v.indexedDB=indexedDB;v.MesaBase=namespace;v.fetch=async()=>{throw Error('Sin conexión');};
+ for(const name of ['catalog-core','catalog'])v.eval(readFileSync('site/mesachef/'+name+'.js','utf8'));v.MesaCatalog.mount(v.document.querySelector('#catalog'),'41011');
+ for(let i=0;i<100&&!v.MesaCatalog.products.length;i++)await new Promise(r=>setTimeout(r,10));
+ const restored=v.MesaCatalog.products.find(p=>p.id===product.id);assert(restored);assert.equal(restored.fetchedAt,date);assert.equal(restored.needsRefresh,true);assert.equal(v.MesaCatalogCore.status(restored,'41011'),'imported');assert(v.document.querySelector('.notice').textContent.length);second.window.close();
 });

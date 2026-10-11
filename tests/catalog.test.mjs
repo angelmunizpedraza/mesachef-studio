@@ -26,8 +26,8 @@ test('una copia importada no convierte sus precios en confirmados antes de consu
  const restored=C.restore(data,{requireRefresh:true});assert.equal(C.status(restored[0].product,'41011'),'imported');assert.equal(C.basket(restored,'41011').totalCents,0);
  assert.equal(C.status(C.restore({schemaVersion:1,kind:data.kind,rows:restored})[0].product,'41011'),'imported');
 });
-test('las cuatro consultas reales pasan validación con sus fechas y cobertura originales',()=>{
- for(const id of ['mercadona','dia','carrefour','mas']){const filename='site/catalogs/'+id+(id==='mercadona'?'-41011':'')+'.json';const data=JSON.parse(fs.readFileSync(filename));const parsed=C.catalog(data,id,'41011');assert.equal(parsed.products.length,data.products.length);assert.ok(parsed.products.length>0);assert.equal(parsed.products[0].fetchedAt,data.products[0].fetchedAt);if(id!=='mercadona')assert.ok(parsed.products.every(p=>!p.zoneConfirmed));}
+test('las consultas reales pasan validación con sus fechas y cobertura originales',()=>{
+ for(const id of ['mercadona','dia','carrefour','mas','alcampo','aldi','elcorteingles']){const filename='site/catalogs/'+id+(id==='mercadona'?'-41011':'')+'.json';const data=JSON.parse(fs.readFileSync(filename));const parsed=C.catalog(data,id,'41011');assert.equal(parsed.products.length,data.products.length);assert.ok(parsed.products.length>0);assert.equal(parsed.products[0].fetchedAt,data.products[0].fetchedAt);if(id!=='mercadona')assert.ok(parsed.products.every(p=>!p.zoneConfirmed));}
 });
 
 test('compara precios de referencia sin mezclar kilos con litros',()=>{const data=[row({referenceUnit:'kg',referenceCents:299}),row({id:'mercadona:2',sourceId:'2',referenceUnit:'L',referenceCents:99}),row({id:'mercadona:3',sourceId:'3',referenceUnit:'kg',referenceCents:159})];const result=C.search(data,{sort:'per-kg'});assert.equal(result.length,2);assert.equal(result[0].sourceId,'3');assert.equal(C.search(data,{sort:'per-L'}).length,1);});

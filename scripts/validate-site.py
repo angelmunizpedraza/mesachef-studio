@@ -6,7 +6,7 @@ BASE=Path(__file__).resolve().parents[1];SITE=BASE/'site'
 html=(SITE/'index.html').read_text()
 for path in re.findall(r'(?:src|href)="(\./[^"]+)"',html):
  assert(SITE/path[2:]).is_file(),f'Recurso ausente: {path}'
-for script in ['data','market-data','market','engine','store','catalog-core','catalog','web-bridge','app','offline-boot']:
+for script in ['data','market-data','market','engine','store','catalog-core','catalog','web-bridge','app','comfort','offline-boot']:
  assert(SITE/'mesachef'/(script+'.js')).is_file()
 manifest=json.loads((SITE/'mesachef/manifest.webmanifest').read_text());assert manifest['scope']=='../'and manifest['start_url']=='../'
 for icon in manifest['icons']:assert(SITE/'mesachef'/icon['src']).is_file()
@@ -20,7 +20,7 @@ for path in(SITE/'market').glob('*.json'):
   assert str(record['raw']['id'])==pid and record['context']['postcode']==path.stem and record['context']['warehouse']==data['warehouse']
   assert record['raw']['share_url'].startswith('https://tienda.mercadona.es/product/'+pid+'/');datetime.fromisoformat(record['context']['fetchedAt'])
 registry=json.loads((SITE/'catalogs/retailers.json').read_text());assert registry['schemaVersion']==1
-origins={'mercadona':'https://tienda.mercadona.es/','dia':'https://www.dia.es/','carrefour':'https://www.carrefour.es/','mas':'https://www.supermercadosmas.com/'}
+origins={'mercadona':'https://tienda.mercadona.es/','dia':'https://www.dia.es/','carrefour':'https://www.carrefour.es/','mas':'https://www.supermercadosmas.com/','alcampo':'https://www.compraonline.alcampo.es/','aldi':'https://www.aldi.es/','elcorteingles':'https://www.elcorteingles.es/'}
 for path in (SITE/'catalogs').glob('*.json'):
  if path.name=='retailers.json':continue
  data=json.loads(path.read_text());assert data['schemaVersion']==1;ids=set();datetime.fromisoformat(data['fetchedAt'])

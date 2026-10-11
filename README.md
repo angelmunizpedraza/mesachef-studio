@@ -4,17 +4,21 @@ Versión web estática de MesaChef Studio: conserva recetas, menús, despensa, c
 
 ## Publicación
 
-El repositorio del usuario es `angelmunizpedraza/mesachef-studio`, público y con Pages habilitado. La integración de GitHub de esta sesión rechazó la escritura (403); ningún archivo fue enviado a ese repositorio. Se ha preparado también una publicación con un único workflow que descarga este paquete público y verifica su SHA-256. El usuario debe confirmar ese archivo en la rama main para iniciar Actions. El workflow inicial descarga y verifica el ZIP una sola vez, guarda el código completo en la rama main y publica Pages. Las siguientes ejecuciones usan ese código del repositorio y guardan las consultas actualizadas, sin sobrescribirlo con el ZIP inicial. No necesita volver a conectar ChatGPT.
+La versión 3.1 está publicada en https://angelmunizpedraza.github.io/mesachef-studio/. Esta revisión 3.2 añade vista fácil, letra configurable, contraste, asistente de menú y copias locales del catálogo. La integración GitHub rechaza escrituras (403); la actualización requiere confirmar el workflow preparado en main. No requiere volver a conectar ChatGPT.
 
+El instalador verifica el SHA-256 del paquete público, mantiene los workflows existentes y guarda el código en main antes de desplegar Pages. Los datos personales permanecen en el navegador. Las actualizaciones de precios conservan siempre la fecha real de cada fuente.
 
-1. Crear un repositorio llamado `mesachef-studio`, con rama `main`, en tu cuenta de GitHub. No subir copias personales, tokens ni contraseñas.
-2. Subir el contenido de este proyecto al repositorio, incluyendo `.github/workflows/pages.yml`.
-3. En **Settings → Pages → Build and deployment → Source**, seleccionar **GitHub Actions**.
-4. En **Actions → Publicar MesaChef Studio**, ejecutar **Run workflow**. Tras terminar, GitHub muestra la dirección publicada en el entorno `github-pages`.
+## Accesibilidad y lectura
 
-Las rutas funcionan en una dirección de proyecto como `https://TU_USUARIO.github.io/mesachef-studio/` y en la raíz de un dominio propio. El ejemplo de URL anterior no es una web ya publicada: falta asociarla a una cuenta real.
+- Vista fácil con cuatro accesos en móvil y todas las funciones disponibles en Más opciones.
+- Texto en rem: tamaños cómoda, grande y muy grande, compatibles con el zoom del navegador.
+- Botones de 44 px como mínimo; principales de 56 px en vista fácil. Contraste reforzado y reducción de movimiento opcionales.
+- Enlace para saltar al contenido, foco de teclado, campos etiquetados y diálogos con cierre.
+- Asistente de tres pasos con revisión antes de crear el menú. Conserva alergias y permite deshacer.
+- Ayuda contextual. Lectura en voz alta si el navegador ofrece síntesis de voz.
+- Catálogos guardados para consultar sin conexión. Las copias mantienen sus fechas y no se convierten en precios confirmados.
 
-GitHub Pages suele publicar la web en internet aunque el repositorio sea privado, según el plan. El código y el catálogo no contienen tus menús ni tu despensa: los datos personales se guardan exclusivamente en el navegador y no se suben a GitHub. Pages de repositorios privados depende de la disponibilidad de tu plan; no se garantiza publicación privada.
+Pruebas funcionales con DOM, estado, foco, copias y contraste de tokens. No se ha verificado con navegador visual ni con usuarios mayores: no se afirma certificación WCAG ni usabilidad universal.
 
 ## Precios reales y sus fechas
 
@@ -64,3 +68,15 @@ Abrir la dirección publicada por HTTPS. En Chrome Android usar **Añadir a pant
 - `python scripts/refresh-prices.py`: consulta real de los códigos postales configurados.
 
 El acabado visual, la instalación y el uso sin conexión en un móvil físico no se han comprobado en un navegador real en esta sesión. El resultado de cada despliegue y su dirección se pueden consultar en Actions y en el entorno github-pages del repositorio.
+
+## Cobertura adicional 3.2
+
+MAS y Alcampo conservan las primeras páginas públicas verificadas. Esto no constituye un catálogo completo, ni confirma disponibilidad o precios en un código postal concreto. La app expone categorías consultadas y fallos. El índice de una tienda puede contener productos antiguos o rutas sin fichas disponibles; no se inventan fichas desde esos enlaces. No se garantiza contener todos los supermercados y productos de Sevilla o de España.
+
+## Catálogos añadidos en 3.2
+
+ALDI utiliza únicamente fichas HTML públicas del índice oficial. Se conserva la fecha real de cada precio; las ofertas fuera de su periodo se marcan no disponibles. El Corte Inglés utiliza páginas HTML públicas de categorías y paginación, sin consultar APIs, cuentas, filtros ni códigos postales. No se atribuye su catálogo a Supercor. Alcampo consulta primeras páginas públicas. Ninguna de estas tres fuentes confirma una tienda de Sevilla.
+
+El archivo `scripts/pages-upgrade.yml` es la plantilla de actualización de GitHub Pages. Después de insertar la URL y SHA256 de la entrega, se añade como `.github/workflows/mejorar-mesachef.yml`. Instala la mejora una sola vez, comprueba funciones y conserva futuras ediciones. Su tarea cada seis horas recorre lotes limitados de ALDI, El Corte Inglés y Alcampo, guarda fichas con sus fechas y publica la app. El flujo ya existente conserva sus consultas de Mercadona, Día y MAS. Los fallos de origen conservan la última copia y no actualizan la fecha del producto. Los lotes avanzan el catálogo, pero no prometen precios de todas las fichas actualizados a la vez.
+
+Consum no expuso productos en el HTML consultado; Eroski y Supeco bloquearon la consulta pública. Covirán publica marca propia y Lidl un índice principalmente de bazar: no equivalen al surtido completo. Cash Fresh publica folletos, sin inventario completo verificado. Estas cadenas siguen pendientes de feeds autorizados.

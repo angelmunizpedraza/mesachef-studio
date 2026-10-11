@@ -7,7 +7,9 @@ from urllib.parse import urljoin,urlparse
 spec=spec_from_file_location('catalogs',Path(__file__).with_name('refresh-catalogs.py'));c=module_from_spec(spec);spec.loader.exec_module(c)
 
 
+BLOCKED=('calamar-y-sepia-congelados','pescados-rebozados','marisco-de-concha-congelado')
 def read_category(category):
+    if any('/pescados-y-mariscos/'+part+'/c/'in category for part in BLOCKED):return category,[],'Ruta excluida por la fuente pública; pendiente de catálogo autorizado'
     found={};visited=set();queue=[category];expected=None
     try:
         while queue:
